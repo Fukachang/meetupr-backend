@@ -1,1 +1,1 @@
-package meetuprbackend
+package main
