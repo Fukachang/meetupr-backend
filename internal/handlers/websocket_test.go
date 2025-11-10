@@ -1,7 +1,6 @@
-package main
+package handlers
 
 import (
-	"meetupr-backend/internal/handlers"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,38 +10,38 @@ import (
 )
 
 func TestWebSocketEcho(t *testing.T) {
-	// テスト用のHTTPサーバーをセットアップ
-	server := httptest.NewServer(http.HandlerFunc(handlers.WsHandler))
+	// Test server
+	server := httptest.NewServer(http.HandlerFunc(WsHandler))
 	defer server.Close()
 
-	// HTTP URLをWebSocket URL (ws://) に変換
+	// Convert http:// to ws://
 	u := "ws" + strings.TrimPrefix(server.URL, "http")
 
-	// WebSocketサーバーに接続
+	// Connect to the server
 	ws, _, err := websocket.DefaultDialer.Dial(u, nil)
 	if err != nil {
 		t.Fatalf("Dial failed: %v", err)
 	}
 	defer ws.Close()
 
-	// テストメッセージを送信
+	// Send test message
 	testMessage := "hello"
 	if err := ws.WriteMessage(websocket.TextMessage, []byte(testMessage)); err != nil {
 		t.Fatalf("WriteMessage failed: %v", err)
 	}
 
-	// サーバーからのエコーメッセージを受信
+	// Receive echo message
 	_, p, err := ws.ReadMessage()
 	if err != nil {
 		t.Fatalf("ReadMessage failed: %v", err)
 	}
 
-	// 受信したメッセージが送信したメッセージと一致するか確認
+	// Check if the message is correct
 	if string(p) != testMessage {
 		t.Errorf("handler returned unexpected body: got %v want %v", string(p), testMessage)
 	}
 
-	// サーバーに正常なクローズメッセージを送信
+	// Send close message
 	err = ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
 		t.Fatalf("Write close message failed: %v", err)
